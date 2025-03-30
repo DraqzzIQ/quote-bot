@@ -1,0 +1,12 @@
+﻿services:
+  quote-bot:
+    image: quote-bot
+    env_file:
+      - ".env"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./bot-data/quotes:/bot-data/quotes
+      - ./bot-data/quotes.db:/bot-data/quotes.db
+    network_mode: "host"
