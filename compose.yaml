@@ -7,6 +7,5 @@
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./bot-data/quotes:/bot-data/quotes
-      - ./bot-data/quotes.db:/bot-data/quotes.db
+      - ./bot-data:/bot-data
     network_mode: "host"
