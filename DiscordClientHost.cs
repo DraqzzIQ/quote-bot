@@ -12,25 +12,29 @@ public class DiscordClientHost : IHostedService
     private readonly ILogger<DiscordClientHost> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly SqliteService _dbService;
-    private Leaderboard leaderboard = new Leaderboard();
+    private readonly LeaderboardService _leaderboardService;
 
     public DiscordClientHost(
         DiscordSocketClient discordSocketClient,
         InteractionService interactionService,
         IServiceProvider serviceProvider,
         ILogger<DiscordClientHost> logger,
-        SqliteService dbService)
+        SqliteService dbService,
+        LeaderboardService leaderboardService)
     {
         ArgumentNullException.ThrowIfNull(discordSocketClient);
         ArgumentNullException.ThrowIfNull(interactionService);
         ArgumentNullException.ThrowIfNull(serviceProvider);
         ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(dbService);
+        ArgumentNullException.ThrowIfNull(leaderboardService);
 
         _discordSocketClient = discordSocketClient;
         _interactionService = interactionService;
         _serviceProvider = serviceProvider;
         _logger = logger;
         _dbService = dbService;
+        _leaderboardService = leaderboardService;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -47,9 +51,6 @@ public class DiscordClientHost : IHostedService
         await _discordSocketClient
             .StartAsync()
             .ConfigureAwait(false);
-
-
-        await leaderboard.CreateLeaderboard(_dbService, _discordSocketClient);
     }
 
 
@@ -102,7 +103,11 @@ public class DiscordClientHost : IHostedService
     {
         var interactionContext = new SocketInteractionContext(_discordSocketClient, interaction);
         IResult res = await _interactionService.ExecuteCommandAsync(interactionContext, _serviceProvider);
-        await leaderboard.UpdateLeaderboardAsync();
+        Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            await _leaderboardService.UpdateLeaderboardAsync();
+        });
         return res;
     }
 
@@ -151,6 +156,8 @@ public class DiscordClientHost : IHostedService
         await _interactionService
             .RegisterCommandsToGuildAsync(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID") ?? throw new ArgumentNullException("GUILD_ID", "Guild id is not set.")))
             .ConfigureAwait(false);
+        
+        await _leaderboardService.CreateLeaderboard();
     }
 
 }

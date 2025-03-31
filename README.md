@@ -1,5 +1,5 @@
 # Quote Bot
-save stupid shit your friends say on discord to bully them
+save stupid shit your friends say on discord
 
 ### .env
 ```

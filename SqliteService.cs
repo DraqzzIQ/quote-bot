@@ -169,7 +169,23 @@ public class SqliteService
         return quoteNames;
     }
 
+    public async Task<List<(string, string)>> GetUpvotedQuotesAsync(int count)
+    {
+        List<(string, string)> quotes = [];
+        
+        string query = "SELECT Upvotes, Name, Culprit, CreatedAt, Content FROM Quote ORDER BY Upvotes DESC LIMIT @Count";
+        await using var cmd = new SqliteCommand(query, _connection);
+        cmd.Parameters.AddWithValue("@Count", count);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            string entry = $"{reader.GetString(0)}: {reader.GetString(1)} - {reader.GetString(2)}, {DateTime.Parse(reader.GetString(3)).ToString("dd.MM.yy")}";
+            quotes.Add((entry, reader.GetString(4)));
+        }
 
+        return quotes;
+    }
+    
     public async Task UpvoteQuoteAsync(string userId, string quoteName)
     {
         await using var insertCmd = new SqliteCommand("INSERT INTO UserUpvotes (UserId, QuoteName) VALUES (@UserId, @QuoteName)", _connection);

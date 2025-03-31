@@ -4,14 +4,14 @@ using Discord;
 [RequireContext(ContextType.Guild)]
 public class CommandModule(SqliteService dbService) : InteractionModuleBase<SocketInteractionContext>
 {
-    private readonly HttpClient _client = new HttpClient();
+    private readonly HttpClient _client = new();
     private readonly ulong _channelId = ulong.Parse(Environment.GetEnvironmentVariable("ALLOWED_CHANNEL_ID")
         ?? throw new ArgumentNullException("ALLOWED_CHANNEL_ID", "Allowed channel id is not set."));
 
     [SlashCommand("add-quote", description: "adds a quote", runMode: RunMode.Async)]
     public async Task AddQuoteAsync([Summary("name", "the name of the quote")] string name,
         [Summary("culprit", "the one quoted")] string culprit,
-        [Summary("quote", "the quote")] string? quote = null,
+        [Summary("quote", "the quote")] string quote,
         [Summary("audio", "optional audio proof")] IAttachment? attachment = null,
         [Summary("date", "optionally supply date of quote in format: dd.MM.yy")] string date = "")
     {
@@ -20,9 +20,9 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
             await RespondAsync("This text channel is not allowed.").ConfigureAwait(false);
             return;
         }
-        if (attachment == null && quote == null)
+        if (string.IsNullOrWhiteSpace(quote))
         {
-            await RespondAsync("No quote text or attachment provided. Provide either one or both.").ConfigureAwait(false);
+            await RespondAsync("Please provide a quote text.").ConfigureAwait(false);
             return;
         }
         DateTime dateTime;
@@ -53,7 +53,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
             {
                 Name = name,
                 Culprit = culprit,
-                Content = quote!,
+                Content = quote,
                 FilePath = "",
                 Upvotes = 0,
                 CreatedAt = dateTime
@@ -78,7 +78,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
 
         quoteEntity = new Quote
         {
-            Content = quote ?? "",
+            Content = quote,
             FilePath = filePath,
             Name = name,
             Culprit = culprit,
