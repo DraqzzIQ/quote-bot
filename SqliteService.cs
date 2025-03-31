@@ -35,6 +35,41 @@ public class SqliteService
         await cmd.ExecuteNonQueryAsync();
     }
 
+    public async Task EditQuoteAsync(string name, string? newQuote, string? newCulprit, DateTime? newCreatedAt) 
+    {
+        string startingQuery = "UPDATE Quote SET";
+        await using var cmd = new SqliteCommand(startingQuery, _connection);
+
+        if (!String.IsNullOrEmpty(newQuote)) 
+        {
+            cmd.CommandText += " Content = @Content,";
+            cmd.Parameters.AddWithValue("@Content", newQuote);
+        }
+
+        if (!String.IsNullOrEmpty(newCulprit))
+        {
+            cmd.CommandText += " Culprit = @Culprit,";
+            cmd.Parameters.AddWithValue("@Culprit", newCulprit);
+        }
+
+        if (newCreatedAt != null)
+        {
+            cmd.CommandText += " CreatedAt = @CreatedAt,";
+            cmd.Parameters.AddWithValue("@CreatedAt", newCreatedAt.Value.ToString("o"));
+        }
+
+        if (cmd.CommandText == startingQuery) 
+        {
+            return;
+        } 
+
+        cmd.CommandText.Remove(cmd.CommandText.Length - 1);
+
+        cmd.CommandText += " WHERE Name = @Name";
+        cmd.Parameters.AddWithValue("@Name", name);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     public async Task RenameQuoteAsync(string name, string newName)
     {
         // Begin an immediate transaction to prevent other processes from making changes
