@@ -307,6 +307,34 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
 
         await FollowUpWithEmbedAsync(quote, "Date updated.");
     }
+    
+    [SlashCommand("update-culprit", description: "update the culprit of the quote", runMode: RunMode.Async)]
+    public async Task UpdateCulpritAsync([Summary("name", "the name of the quote")] string name, [Summary("culprit", "the culprit")] string culprit)
+    {
+        if (!IsChannelAllowed(Context.Channel))
+        {
+            await RespondAsync("This text channel is not allowed.").ConfigureAwait(false);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(culprit))
+        {
+            await RespondAsync("Please provide a culprit.").ConfigureAwait(false);
+            return;
+        }
+        await DeferAsync().ConfigureAwait(false);
+        if (!await QuoteExists(name))
+        {
+            await FollowupAsync("The Quote does not exist.").ConfigureAwait(false);
+            return;
+        }
+
+        Quote quote = (Quote)await dbService.GetQuoteAsync(name);
+
+        await dbService.SetCulpritAsync(name, culprit);
+
+        await FollowUpWithEmbedAsync(quote, "Culprit updated.");
+    }
 
     private async Task FollowUpWithEmbedAsync(Quote quote, string message = "")
     {

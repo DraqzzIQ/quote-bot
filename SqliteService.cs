@@ -231,6 +231,15 @@ public class SqliteService
 
         await cmd.ExecuteNonQueryAsync();
     }
+    
+    public async Task SetCulpritAsync(string name, string culprit)
+    {
+        await using var cmd = new SqliteCommand("UPDATE Quote SET Culprit = @Culprit WHERE Name = @Name", _connection);
+        cmd.Parameters.AddWithValue("@Name", name);
+        cmd.Parameters.AddWithValue("@Culprit", culprit);
+
+        await cmd.ExecuteNonQueryAsync();
+    }
 
     private static SqliteConnection CreateSqliteConnection()
     {
