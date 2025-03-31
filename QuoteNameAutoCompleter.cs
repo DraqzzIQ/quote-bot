@@ -13,11 +13,11 @@ public class QuoteNameAutoCompleter(SqliteService dbService) : AutocompleteHandl
         if (string.IsNullOrWhiteSpace(name))
             return AutocompletionResult.FromSuccess(names
                 .Select(q => new AutocompleteResult(q, q))
-                .ToList());
+                .ToList().Take(25));
             
         return AutocompletionResult.FromSuccess(names
             .Where(q => q.ToLower().Contains(name.ToLower()))
             .Select(q => new AutocompleteResult(q, q))
-            .ToList());
+            .ToList().Take(25));
     }
 }

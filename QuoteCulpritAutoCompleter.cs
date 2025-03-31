@@ -13,11 +13,11 @@ public class QuoteCulpritAutoCompleter(SqliteService dbService) : AutocompleteHa
         if (string.IsNullOrWhiteSpace(culprit))
             return AutocompletionResult.FromSuccess(culprits
             .Select(q => new AutocompleteResult(q, q))
-            .ToList());
+            .ToList().Take(25));
             
         return AutocompletionResult.FromSuccess(culprits
             .Where(q => q.ToLower().Contains(culprit.ToLower()))
             .Select(q => new AutocompleteResult(q, q))
-            .ToList());
+            .ToList().Take(25));
     }
 }
