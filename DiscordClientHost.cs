@@ -12,9 +12,7 @@ public class DiscordClientHost : IHostedService
     private readonly ILogger<DiscordClientHost> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly SqliteService _dbService;
-    private IUserMessage? leaderboardMessage = null;
-
-    private List<string> currentLeaderboard;
+    private Leaderboard leaderboard = new Leaderboard();
 
     public DiscordClientHost(
         DiscordSocketClient discordSocketClient,
@@ -49,6 +47,9 @@ public class DiscordClientHost : IHostedService
         await _discordSocketClient
             .StartAsync()
             .ConfigureAwait(false);
+
+
+        await leaderboard.CreateLeaderboard(_dbService, _discordSocketClient);
     }
 
 
@@ -97,42 +98,11 @@ public class DiscordClientHost : IHostedService
         return Task.CompletedTask;
     }
 
-    private Task<IResult> InteractionCreated(SocketInteraction interaction)
+    private async Task<IResult> InteractionCreated(SocketInteraction interaction)
     {
         var interactionContext = new SocketInteractionContext(_discordSocketClient, interaction);
-        Task<IResult> res = _interactionService.ExecuteCommandAsync(interactionContext, _serviceProvider);
-        Task.Run(async () =>
-        {
-            await res;
-            Task<List<string>> dbTask = _dbService.GetAllQuotesAsync(SortType.Upvotes, maxCount: 7);
-            if (leaderboardMessage == null)
-            {
-                leaderboardMessage = await interaction.Channel.SendMessageAsync("**Top Quotes**");
-                await leaderboardMessage.PinAsync();
-            }
-            else
-            {
-                bool isDifferent = false;
-                List<string> leaderboard = await dbTask;
-                for (int i = 0; i < leaderboard.Count(); i++)
-                {
-                    if (!Object.Equals(leaderboard[i], currentLeaderboard[i]))
-                    {
-                        isDifferent = true;
-                    }
-                }
-                if (!isDifferent)
-                {
-                    return;
-                }
-            }
-
-
-            await leaderboardMessage.ModifyAsync(async props =>
-            {
-                props.Content = Optional.Create<string>("**Top Quotes**\n" + string.Join("\n", await dbTask));
-            }).ConfigureAwait(false);
-        });
+        IResult res = await _interactionService.ExecuteCommandAsync(interactionContext, _serviceProvider);
+        await leaderboard.UpdateLeaderboardAsync();
         return res;
     }
 
