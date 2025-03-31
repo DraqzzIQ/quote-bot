@@ -178,14 +178,27 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     }
 
     [SlashCommand("edit-quote", description: "edit date and/or content and/or culprit and/or date of a quote", runMode: RunMode.Async)]
-    public async Task EditQuoteAsync([Summary("name", "current name of the quote")] string name, [Summary("newQuote", "the new quote content")] string? newQuote = null, [Summary("newCulprit", "the new culprit")] string? newCulprit = null, [Summary("newDate", "the new date")] DateTime? newCreatedAt = null)
+    public async Task EditQuoteAsync([Summary("name", "current name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name, [Summary("newQuote", "the new quote content")] string? newQuote = null, [Summary("newCulprit", "the new culprit")] string? newCulprit = null, [Summary("newDate", "the new date")] DateTime? newCreatedAt = null)
     {
+        if (!IsChannelAllowed(Context.Channel))
+        {
+            await RespondAsync("This text channel is not allowed.").ConfigureAwait(false);
+            return;
+        }
+        await DeferAsync().ConfigureAwait(false);
+        if (!await QuoteExists(name))
+        {
+            await FollowupAsync("The Quote does not exist.").ConfigureAwait(false);
+            return;
+        }
         await dbService.EditQuoteAsync(name, newQuote, newCulprit, newCreatedAt);
-        await RespondAsync("Quote edited.");
+        
+        Quote quote = (Quote)await dbService.GetQuoteAsync(name);
+        await FollowUpWithEmbedAsync(quote, "Quote edited.");
     }
 
     [SlashCommand("edit-quote-content", description: "edit content of a quote", runMode: RunMode.Async)]
-    public async Task EditQuoteContentAsync([Summary("name", "the name of the quote")] string name, [Summary("newQuote", "the new quote")] string newQuote)
+    public async Task EditQuoteContentAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name, [Summary("newQuote", "the new quote")] string newQuote)
     {
         if (!IsChannelAllowed(Context.Channel))
         {

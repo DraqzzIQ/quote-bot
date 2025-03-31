@@ -35,12 +35,12 @@ public class SqliteService
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public async Task EditQuoteAsync(string name, string? newQuote, string? newCulprit, DateTime? newCreatedAt) 
+    public async Task EditQuoteAsync(string name, string? newQuote, string? newCulprit, DateTime? newCreatedAt)
     {
         string startingQuery = "UPDATE Quote SET";
         await using var cmd = new SqliteCommand(startingQuery, _connection);
 
-        if (!String.IsNullOrEmpty(newQuote)) 
+        if (!String.IsNullOrEmpty(newQuote))
         {
             cmd.CommandText += " Content = @Content,";
             cmd.Parameters.AddWithValue("@Content", newQuote);
@@ -58,12 +58,12 @@ public class SqliteService
             cmd.Parameters.AddWithValue("@CreatedAt", newCreatedAt.Value.ToString("o"));
         }
 
-        if (cmd.CommandText == startingQuery) 
+        if (cmd.CommandText == startingQuery)
         {
             return;
-        } 
+        }
 
-        cmd.CommandText.Remove(cmd.CommandText.Length - 1);
+        cmd.CommandText = cmd.CommandText.Remove(cmd.CommandText.Length - 1);
 
         cmd.CommandText += " WHERE Name = @Name";
         cmd.Parameters.AddWithValue("@Name", name);
@@ -207,7 +207,7 @@ public class SqliteService
     public async Task<List<(string, string)>> GetUpvotedQuotesAsync(int count)
     {
         List<(string, string)> quotes = [];
-        
+
         string query = "SELECT Upvotes, Name, Culprit, CreatedAt, Content FROM Quote ORDER BY Upvotes DESC LIMIT @Count";
         await using var cmd = new SqliteCommand(query, _connection);
         cmd.Parameters.AddWithValue("@Count", count);
@@ -220,7 +220,7 @@ public class SqliteService
 
         return quotes;
     }
-    
+
     public async Task UpvoteQuoteAsync(string userId, string quoteName)
     {
         await using var insertCmd = new SqliteCommand("INSERT INTO UserUpvotes (UserId, QuoteName) VALUES (@UserId, @QuoteName)", _connection);
@@ -266,7 +266,7 @@ public class SqliteService
 
         await cmd.ExecuteNonQueryAsync();
     }
-    
+
     public async Task SetCulpritAsync(string name, string culprit)
     {
         await using var cmd = new SqliteCommand("UPDATE Quote SET Culprit = @Culprit WHERE Name = @Name", _connection);
@@ -275,7 +275,7 @@ public class SqliteService
 
         await cmd.ExecuteNonQueryAsync();
     }
-    
+
     public async Task<List<string>> GetRawQuoteNamesAsync()
     {
         var quoteNames = new List<string>();
@@ -290,7 +290,7 @@ public class SqliteService
 
         return quoteNames;
     }
-    
+
     public async Task<List<string>> GetRawQuoteCupritsAsync()
     {
         var culprits = new List<string>();
@@ -305,7 +305,7 @@ public class SqliteService
 
         return culprits;
     }
-    
+
     private static SqliteConnection CreateSqliteConnection()
     {
         var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
