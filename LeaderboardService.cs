@@ -45,7 +45,7 @@ public class LeaderboardService(SqliteService dbService, DiscordSocketClient cli
         string formatted = "## Top Quotes\n";
         foreach ((string header, string quote) in leaderboard)
         {
-            formatted += $"**{header}**\n{quote}\n";
+            formatted += $"**{header}**\n„{quote}”\n";
         }
         return formatted;
     }

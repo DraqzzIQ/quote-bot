@@ -5,7 +5,7 @@ public class Messages
     public static Embed CreateEmbed(string name, string quote, string author, DateTime date, int upvotes)
     {
         var builder = new EmbedBuilder();
-        return builder.AddField($"{upvotes}: {name}", quote)
+        return builder.AddField($"{upvotes}: {name}", $"„{quote}”")
         .WithFooter($"{author} - {date.ToString("dd.MM.yy")}").Build();
     }
 
