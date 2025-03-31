@@ -177,8 +177,15 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
         await FollowupAsync("Quote deleted.");
     }
 
-    [SlashCommand("edit-quote", description: "edit a quote", runMode: RunMode.Async)]
-    public async Task EditQuoteAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name, [Summary("newQuote", "the new quote")] string newQuote)
+    [SlashCommand("edit-quote", description: "edit date and/or content and/or culprit and/or date of a quote", runMode: RunMode.Async)]
+    public async Task EditQuoteAsync([Summary("name", "current name of the quote")] string name, [Summary("newQuote", "the new quote content")] string? newQuote = null, [Summary("newCulprit", "the new culprit")] string? newCulprit = null, [Summary("newDate", "the new date")] DateTime? newCreatedAt = null)
+    {
+        await dbService.EditQuoteAsync(name, newQuote, newCulprit, newCreatedAt);
+        await RespondAsync("Quote edited.");
+    }
+
+    [SlashCommand("edit-quote-content", description: "edit content of a quote", runMode: RunMode.Async)]
+    public async Task EditQuoteContentAsync([Summary("name", "the name of the quote")] string name, [Summary("newQuote", "the new quote")] string newQuote)
     {
         if (!IsChannelAllowed(Context.Channel))
         {
