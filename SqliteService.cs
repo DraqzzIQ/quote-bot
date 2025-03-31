@@ -28,7 +28,7 @@ public class SqliteService
 
     public async Task EditQuoteAsync(string name, string newQuote)
     {
-        await using var cmd = new SqliteCommand("UPDATE Quote SET Content = @Content, WHERE Name = @Name", _connection);
+        await using var cmd = new SqliteCommand("UPDATE Quote SET Content = @Content WHERE Name = @Name", _connection);
         cmd.Parameters.AddWithValue("@Name", name);
         cmd.Parameters.AddWithValue("@Content", newQuote);
 
