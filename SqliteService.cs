@@ -240,7 +240,37 @@ public class SqliteService
 
         await cmd.ExecuteNonQueryAsync();
     }
+    
+    public async Task<List<string>> GetRawQuoteNamesAsync()
+    {
+        var quoteNames = new List<string>();
+        string query = "SELECT Name FROM Quote";
 
+        await using var cmd = new SqliteCommand(query, _connection);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            quoteNames.Add(reader.GetString(0));
+        }
+
+        return quoteNames;
+    }
+    
+    public async Task<List<string>> GetRawQuoteCupritsAsync()
+    {
+        var culprits = new List<string>();
+        string query = "SELECT Culprit FROM Quote";
+
+        await using var cmd = new SqliteCommand(query, _connection);
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            culprits.Add(reader.GetString(0));
+        }
+
+        return culprits;
+    }
+    
     private static SqliteConnection CreateSqliteConnection()
     {
         var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");

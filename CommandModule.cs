@@ -92,7 +92,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     }
 
     [SlashCommand("get-quote", description: "get a quote", runMode: RunMode.Async)]
-    public async Task GetQuoteAsync([Summary("name", "the name of the quote")] string name)
+    public async Task GetQuoteAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name)
     {
         if (!IsChannelAllowed(Context.Channel))
         {
@@ -118,7 +118,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     }
 
     [SlashCommand("list-quotes", description: "list all quotes", runMode: RunMode.Async)]
-    public async Task ListQuotesAsync([Summary("culprit", "the name of the culprit")] string? culprit = null, [Choice("Sort by date", (int)SortType.Date), Choice("Sort by upvotes", (int)SortType.Upvotes)] int sortType = (int)SortType.Upvotes)
+    public async Task ListQuotesAsync([Summary("culprit", "the name of the culprit"), Autocomplete(typeof(QuoteCulpritAutoCompleter))] string? culprit = null, [Choice("Sort by date", (int)SortType.Date), Choice("Sort by upvotes", (int)SortType.Upvotes)] int sortType = (int)SortType.Upvotes)
     {
         SortType sortTypeEnumVal = (SortType)sortType;
 
@@ -156,7 +156,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
 
 
     [SlashCommand("delete-quote", description: "delete a quote", runMode: RunMode.Async)]
-    public async Task DeleteQuote([Summary("name", "the name of the quote")] string name)
+    public async Task DeleteQuote([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name)
     {
         if (!IsChannelAllowed(Context.Channel))
         {
@@ -178,7 +178,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     }
 
     [SlashCommand("edit-quote", description: "edit a quote", runMode: RunMode.Async)]
-    public async Task EditQuoteAsync([Summary("name", "the name of the quote")] string name, [Summary("newQuote", "the new quote")] string newQuote)
+    public async Task EditQuoteAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name, [Summary("newQuote", "the new quote")] string newQuote)
     {
         if (!IsChannelAllowed(Context.Channel))
         {
@@ -199,7 +199,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     }
 
     [SlashCommand("rename-quote", description: "rename a quote", runMode: RunMode.Async)]
-    public async Task RenameQuoteAsync([Summary("name", "the original name of the quote")] string name, [Summary("newName", "the new name of the quote")] string newName)
+    public async Task RenameQuoteAsync([Summary("name", "the original name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name, [Summary("newName", "the new name of the quote")] string newName)
     {
         if (!IsChannelAllowed(Context.Channel))
         {
@@ -225,7 +225,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     }
 
     [SlashCommand("add-audio", description: "add audio to a quote", runMode: RunMode.Async)]
-    public async Task AddAudioAsync([Summary("name", "the name of the quote")] string name, [Summary("audio", "audio proof")] IAttachment attachment)
+    public async Task AddAudioAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name, [Summary("audio", "audio proof")] IAttachment attachment)
     {
         if (!IsChannelAllowed(Context.Channel))
         {
@@ -260,7 +260,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     }
 
     [SlashCommand("remove-audio", description: "remove audio from a quote", runMode: RunMode.Async)]
-    public async Task RemoveAudioAsync([Summary("name", "the name of the quote")] string name)
+    public async Task RemoveAudioAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name)
     {
         if (!IsChannelAllowed(Context.Channel))
         {
@@ -281,7 +281,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     }
 
     [SlashCommand("update-quote-date", description: "update the date of the quote", runMode: RunMode.Async)]
-    public async Task UpdateQuoteDateAsync([Summary("name", "the name of the quote")] string name, [Summary("date", "format is: dd.MM.yy")] string date)
+    public async Task UpdateQuoteDateAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name, [Summary("date", "format is: dd.MM.yy")] string date)
     {
         if (!IsChannelAllowed(Context.Channel))
         {
@@ -309,7 +309,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     }
     
     [SlashCommand("update-culprit", description: "update the culprit of the quote", runMode: RunMode.Async)]
-    public async Task UpdateCulpritAsync([Summary("name", "the name of the quote")] string name, [Summary("culprit", "the culprit")] string culprit)
+    public async Task UpdateCulpritAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name, [Summary("culprit", "the culprit")] string culprit)
     {
         if (!IsChannelAllowed(Context.Channel))
         {
