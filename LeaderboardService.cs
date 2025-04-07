@@ -5,8 +5,8 @@ public class LeaderboardService(SqliteService dbService, DiscordSocketClient cli
 {
     private List<(string, string)> _currentLeaderboard = [];
     private IUserMessage _leaderboardMessage;
-    private readonly ulong _channelId = ulong.Parse(Environment.GetEnvironmentVariable("ALLOWED_CHANNEL_ID")
-        ?? throw new ArgumentNullException("ALLOWED_CHANNEL_ID", "Allowed channel id is not set."));
+    private readonly ulong _channelId = ulong.Parse(Environment.GetEnvironmentVariable("SCOREBOARD_CHANNEL_ID")
+        ?? throw new ArgumentNullException("SCOREBOARD_CHANNEL_ID", "Scoreboard channel id is not set."));
 
     public async Task CreateLeaderboard()
     {

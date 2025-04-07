@@ -4,6 +4,7 @@ using Discord;
 [RequireContext(ContextType.Guild)]
 public class CommandModule(SqliteService dbService) : InteractionModuleBase<SocketInteractionContext>
 {
+    private const int MaxChars = 2000;
     private readonly HttpClient _client = new();
     private readonly ulong _channelId = ulong.Parse(Environment.GetEnvironmentVariable("ALLOWED_CHANNEL_ID")
         ?? throw new ArgumentNullException("ALLOWED_CHANNEL_ID", "Allowed channel id is not set."));
@@ -129,8 +130,12 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
         }
         await DeferAsync().ConfigureAwait(false);
         List<string> quotes = await dbService.GetAllQuotesAsync(sortTypeEnumVal, culprit).ConfigureAwait(false);
+        for (int i = 0; i < 100; i++)
+        {
+            quotes.Add(quotes[1]);
+        }
 
-        await FollowupAsync("**Quotes:**\n" + string.Join("\n", quotes)).ConfigureAwait(false);
+        await ReplyWithinCharacterLimit("**Quotes:**\n" + string.Join("\n", quotes)).ConfigureAwait(false);
     }
 
     [SlashCommand("random-quote", description: "get a random quote", runMode: RunMode.Async)]
@@ -365,7 +370,6 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
             await using var fs = new FileStream(quote.FilePath, FileMode.Open, FileAccess.Read, FileShare.None);
             var info = new FileInfo(quote.FilePath);
             await FollowupWithFileAsync(fs, ReplaceInvalidChars($"{quote.Name} - {quote.Culprit}{info.Extension}"), text: message, embed: embed, components: upvoteComponent).ConfigureAwait(false);
-            await fs.DisposeAsync();
             return;
         }
         await FollowupAsync(message, embed: embed, components: upvoteComponent).ConfigureAwait(false);
@@ -384,5 +388,46 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     private string ReplaceInvalidChars(string filename)
     {
         return string.Join("_", filename.Split(Path.GetInvalidFileNameChars()));
+    }
+
+    private async Task ReplyWithinCharacterLimit(string message)
+    {
+        if(message.Length <= MaxChars)
+        {
+            await FollowupAsync(message).ConfigureAwait(false);
+            return;
+        }
+
+        var messageLines = message.Split("\n");
+        string messagePart = "";
+        bool first = true;
+        foreach (var line in messageLines)
+        {
+            if (messagePart.Length + line.Length + 1 <= MaxChars)
+            {
+                messagePart += line + "\n";
+                continue;
+            }
+            
+            if (first)
+            {
+                await FollowupAsync(messagePart).ConfigureAwait(false);
+                first = false;
+            }
+            else
+            {
+                await Context.Channel.SendMessageAsync(messagePart).ConfigureAwait(false);
+            }
+            messagePart = line + "\n";
+        }
+        if (!string.IsNullOrEmpty(messagePart))
+        {
+            if (first)
+            {
+                await FollowupAsync(messagePart).ConfigureAwait(false);
+                return;
+            }
+            await Context.Channel.SendMessageAsync(messagePart).ConfigureAwait(false);
+        }
     }
 }

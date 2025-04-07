@@ -25,7 +25,7 @@ public class QuoteOfTheWeek(DiscordSocketClient client, SqliteService dbService)
         
         await using var fs = new FileStream(quote.Value.FilePath, FileMode.Open, FileAccess.Read, FileShare.None);
         var info = new FileInfo(quote.Value.FilePath);
-        await channel.SendFileAsync(fs, ReplaceInvalidChars($"{quote.Value.Name} - {quote.Value.Culprit}{info.Extension}"), text: "## Quote of the week", embed: embed, components: upvoteComponent).ConfigureAwait(false);
+        await channel.SendFileAsync(fs, ReplaceInvalidChars($"{quote.Value.Name} - {quote.Value.Culprit}{info.Extension}"), text: "## Motivational quote of the week", embed: embed, components: upvoteComponent).ConfigureAwait(false);
     }
     
     private string ReplaceInvalidChars(string filename)
