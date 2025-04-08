@@ -130,10 +130,6 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
         }
         await DeferAsync().ConfigureAwait(false);
         List<string> quotes = await dbService.GetAllQuotesAsync(sortTypeEnumVal, culprit).ConfigureAwait(false);
-        for (int i = 0; i < 100; i++)
-        {
-            quotes.Add(quotes[1]);
-        }
 
         await ReplyWithinCharacterLimit("**Quotes:**\n" + string.Join("\n", quotes)).ConfigureAwait(false);
     }
