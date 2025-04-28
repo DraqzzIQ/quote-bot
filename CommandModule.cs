@@ -71,8 +71,8 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
         }
 
         var info = new FileInfo(attachment.Filename);
-        string filePath = "/bot-data/quotes/" + Guid.NewGuid().ToString() + info.Extension;
-        await using var fs = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+        string filePath = "/bot-data/quotes/" + Guid.NewGuid() + info.Extension;
+        await using var fs = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
         var response = await _client.GetAsync(attachment!.Url).ConfigureAwait(false);
         await response.Content.CopyToAsync(fs).ConfigureAwait(false);
         await fs.DisposeAsync();
@@ -363,9 +363,9 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
         MessageComponent upvoteComponent = Messages.CreateVoteComponent(quote.Name);
         if (!String.IsNullOrEmpty(quote.FilePath))
         {
-            await using var fs = new FileStream(quote.FilePath, FileMode.Open, FileAccess.Read, FileShare.None);
+            await using var fs = new FileStream(quote.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             var info = new FileInfo(quote.FilePath);
-            await FollowupWithFileAsync(fs, ReplaceInvalidChars($"{quote.Name} - {quote.Culprit}{info.Extension}"), text: message, embed: embed, components: upvoteComponent).ConfigureAwait(false);
+            await FollowupWithFileAsync(fs, Util.ReplaceInvalidChars($"{quote.Name} - {quote.Culprit}{info.Extension}"), text: message, embed: embed, components: upvoteComponent).ConfigureAwait(false);
             return;
         }
         await FollowupAsync(message, embed: embed, components: upvoteComponent).ConfigureAwait(false);
@@ -379,11 +379,6 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
     private bool IsChannelAllowed(IChannel channel)
     {
         return channel.Id == _channelId;
-    }
-
-    private string ReplaceInvalidChars(string filename)
-    {
-        return string.Join("_", filename.Split(Path.GetInvalidFileNameChars()));
     }
 
     private async Task ReplyWithinCharacterLimit(string message)

@@ -3,7 +3,7 @@ using Discord.WebSocket;
 
 public class LeaderboardService(SqliteService dbService, DiscordSocketClient client)
 {
-    private List<(string, string)> _currentLeaderboard = [];
+    private List<Quote> _currentLeaderboard = [];
     private IUserMessage _leaderboardMessage;
     private readonly ulong _channelId = ulong.Parse(Environment.GetEnvironmentVariable("SCOREBOARD_CHANNEL_ID")
         ?? throw new ArgumentNullException("SCOREBOARD_CHANNEL_ID", "Scoreboard channel id is not set."));
@@ -23,30 +23,46 @@ public class LeaderboardService(SqliteService dbService, DiscordSocketClient cli
         }
 
         _currentLeaderboard = await dbService.GetUpvotedQuotesAsync(7).ConfigureAwait(false);
-        _leaderboardMessage = await channel.SendMessageAsync(GetFormattedLeaderboard(_currentLeaderboard)).ConfigureAwait(false);
+        _leaderboardMessage = await channel.SendFilesAsync(GetFileAttachments(_currentLeaderboard), text: GetFormattedLeaderboard(_currentLeaderboard)).ConfigureAwait(false);
         await _leaderboardMessage.PinAsync().ConfigureAwait(false);
     }
 
     public async Task UpdateLeaderboardAsync()
     {
-        List<(string, string)> newLeaderboard = await dbService.GetUpvotedQuotesAsync(7).ConfigureAwait(false);
-        if (string.Join("", newLeaderboard) == string.Join("", _currentLeaderboard))
+        List<Quote> newLeaderboard = await dbService.GetUpvotedQuotesAsync(7).ConfigureAwait(false);
+        if (newLeaderboard.Count != _currentLeaderboard.Count)
             return;
+        
+        if (newLeaderboard.Where((t, i) => !t.Equals(_currentLeaderboard[i])).Any())
+        {
+            return;
+        }
         
         await _leaderboardMessage.ModifyAsync(props =>
         {
             props.Content = GetFormattedLeaderboard(newLeaderboard);
+            props.Attachments = GetFileAttachments(newLeaderboard);
         }).ConfigureAwait(false);
         _currentLeaderboard = newLeaderboard;
     }
     
-    private string GetFormattedLeaderboard(List<(string, string)> leaderboard)
+    private string GetFormattedLeaderboard(List<Quote> leaderboard)
     {
-        string formatted = "## Top Quotes\n";
-        foreach ((string header, string quote) in leaderboard)
+        return leaderboard.Aggregate("## Top Quotes\n", (current, quote) => current + $"**{quote.Upvotes}: {quote.Name} - {quote.Culprit}, {quote.CreatedAt:dd.MM.yy}**\n„{quote.Content}”\n");
+    }
+
+    private List<FileAttachment> GetFileAttachments(List<Quote> leaderboard)
+    {
+        List<FileAttachment> fileAttachments = [];
+        foreach(Quote quote in leaderboard)
         {
-            formatted += $"**{header}**\n„{quote}”\n";
+            if (quote.FilePath == "")
+                continue;
+
+            var info = new FileInfo(quote.FilePath);
+            var file = new FileAttachment(quote.FilePath, Util.ReplaceInvalidChars($"{quote.Name} - {quote.Culprit}{info.Extension}"));
+            fileAttachments.Add(file);
         }
-        return formatted;
+        return fileAttachments;
     }
 }

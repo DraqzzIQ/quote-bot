@@ -204,18 +204,25 @@ public class SqliteService
         return quoteNames;
     }
 
-    public async Task<List<(string, string)>> GetUpvotedQuotesAsync(int count)
+    public async Task<List<Quote>> GetUpvotedQuotesAsync(int count)
     {
-        List<(string, string)> quotes = [];
+        List<Quote> quotes = [];
 
-        string query = "SELECT Upvotes, Name, Culprit, CreatedAt, Content FROM Quote ORDER BY Upvotes DESC LIMIT @Count";
+        string query = "SELECT Name, Content, Culprit, File, Upvotes, CreatedAt FROM Quote ORDER BY Upvotes DESC LIMIT @Count";
         await using var cmd = new SqliteCommand(query, _connection);
         cmd.Parameters.AddWithValue("@Count", count);
         await using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            string entry = $"{reader.GetString(0)}: {reader.GetString(1)} - {reader.GetString(2)}, {DateTime.Parse(reader.GetString(3)).ToString("dd.MM.yy")}";
-            quotes.Add((entry, reader.GetString(4)));
+            quotes.Add(new Quote
+            {
+                Name = reader.GetString(0),
+                Content = reader.GetString(1),
+                Culprit = reader.GetString(2),
+                FilePath = reader.GetString(3),
+                Upvotes = reader.GetInt32(4),
+                CreatedAt = DateTime.Parse(reader.GetString(5))
+            });
         }
 
         return quotes;
