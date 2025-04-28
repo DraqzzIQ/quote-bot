@@ -6,7 +6,7 @@ public class QuoteCulpritAutoCompleter(SqliteService dbService) : AutocompleteHa
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction,
         IParameterInfo parameter, IServiceProvider services)
     {
-        var culprits = await dbService.GetRawQuoteCupritsAsync();
+        var culprits = (await dbService.GetRawQuoteCupritsAsync()).Distinct().ToList();
         var culprit =
             autocompleteInteraction.Data.Options.First(opt => opt.Name == "culprit").Value as string ?? "";
         

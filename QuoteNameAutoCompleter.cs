@@ -6,7 +6,7 @@ public class QuoteNameAutoCompleter(SqliteService dbService) : AutocompleteHandl
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction,
         IParameterInfo parameter, IServiceProvider services)
     {
-        var names = await dbService.GetRawQuoteNamesAsync();
+        var names = (await dbService.GetRawQuoteNamesAsync()).Distinct().ToList();
         var name =
             autocompleteInteraction.Data.Options.First(opt => opt.Name == "name").Value as string ?? "";
         
