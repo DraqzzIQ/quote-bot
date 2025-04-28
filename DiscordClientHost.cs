@@ -129,9 +129,23 @@ public class DiscordClientHost : IHostedService
         }
         else if (component.Data.CustomId.StartsWith("REMOVE"))
         {
+            if (!await _dbService.HasUserUpvotedAsync(userId, quoteName))
+            {
+                await component.RespondAsync("You did not upvote this quote.", ephemeral: true);
+                return;
+            }
             await _dbService.RemoveUpvoteAsync(userId, quoteName);
             await component.RespondAsync("Upvote removed.", ephemeral: true);
         }
+        
+        Quote? quoteOpt = await _dbService.GetQuoteAsync(quoteName);
+        if (quoteOpt == null)
+            return;
+        Quote quote = (Quote)quoteOpt;
+        await component.Message.ModifyAsync(props =>
+        {
+            props.Embed = Messages.CreateEmbed(quote.Name, quote.Content, quote.Culprit, quote.CreatedAt, quote.Upvotes);
+        }).ConfigureAwait(false);
     }
 
     private async Task ClientReady()
