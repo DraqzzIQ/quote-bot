@@ -30,13 +30,9 @@ public class LeaderboardService(SqliteService dbService, DiscordSocketClient cli
     public async Task UpdateLeaderboardAsync()
     {
         List<Quote> newLeaderboard = await dbService.GetUpvotedQuotesAsync(7).ConfigureAwait(false);
-        if (newLeaderboard.Count != _currentLeaderboard.Count)
+        if (newLeaderboard.Count == _currentLeaderboard.Count &&
+            !newLeaderboard.Where((t, i) => !t.Equals(_currentLeaderboard[i])).Any())
             return;
-        
-        if (newLeaderboard.Where((t, i) => !t.Equals(_currentLeaderboard[i])).Any())
-        {
-            return;
-        }
         
         await _leaderboardMessage.ModifyAsync(props =>
         {
