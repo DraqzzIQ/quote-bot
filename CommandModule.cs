@@ -131,7 +131,7 @@ public class CommandModule(SqliteService dbService) : InteractionModuleBase<Sock
         await DeferAsync().ConfigureAwait(false);
         List<string> quotes = await dbService.GetAllQuotesAsync(sortTypeEnumVal, culprit).ConfigureAwait(false);
 
-        await ReplyWithinCharacterLimit("**Quotes:**\n" + string.Join("\n", quotes)).ConfigureAwait(false);
+        await ReplyWithinCharacterLimit($"**{quotes.Count} Quotes:**\n" + string.Join("\n", quotes)).ConfigureAwait(false);
     }
 
     [SlashCommand("random-quote", description: "get a random quote", runMode: RunMode.Async)]
