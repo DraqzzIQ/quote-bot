@@ -26,19 +26,11 @@ public class SqliteService
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public async Task EditQuoteAsync(string name, string newQuote)
-    {
-        await using var cmd = new SqliteCommand("UPDATE Quote SET Content = @Content WHERE Name = @Name", _connection);
-        cmd.Parameters.AddWithValue("@Name", name);
-        cmd.Parameters.AddWithValue("@Content", newQuote);
-
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task EditQuoteAsync(string name, string? newQuote, string? newCulprit, DateTime? newCreatedAt)
+    public async Task EditQuoteAsync(string name, string? newName, string? newQuote, string? newCulprit, DateTime? newCreatedAt)
     {
         string startingQuery = "UPDATE Quote SET";
         await using var cmd = new SqliteCommand(startingQuery, _connection);
+
 
         if (!String.IsNullOrEmpty(newQuote))
         {
@@ -58,53 +50,48 @@ public class SqliteService
             cmd.Parameters.AddWithValue("@CreatedAt", newCreatedAt.Value.ToString("o"));
         }
 
-        if (cmd.CommandText == startingQuery)
+        if (!String.IsNullOrEmpty(newName))
         {
-            return;
+            await using var transaction = _connection.BeginTransaction(System.Data.IsolationLevel.Serializable);
+            cmd.Transaction = transaction;
+            try
+            {
+                await using var deferCmd = new SqliteCommand("PRAGMA defer_foreign_keys = ON;", _connection, transaction);
+                await deferCmd.ExecuteNonQueryAsync();
+
+                cmd.CommandText += " Name = @NewName WHERE Name = @OldName";
+                cmd.Parameters.AddWithValue("@NewName", newName);
+                cmd.Parameters.AddWithValue("@OldName", name);
+                await cmd.ExecuteNonQueryAsync();
+
+                await using var updateUpvotesCmd = new SqliteCommand(
+                    "UPDATE UserUpvotes SET QuoteName = @NewName WHERE QuoteName = @OldName",
+                    _connection,
+                    transaction);
+
+                updateUpvotesCmd.Parameters.AddWithValue("@OldName", name);
+                updateUpvotesCmd.Parameters.AddWithValue("@NewName", newName);
+                await updateUpvotesCmd.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw ex;
+            }
         }
-
-        cmd.CommandText = cmd.CommandText.Remove(cmd.CommandText.Length - 1);
-
-        cmd.CommandText += " WHERE Name = @Name";
-        cmd.Parameters.AddWithValue("@Name", name);
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task RenameQuoteAsync(string name, string newName)
-    {
-        // Begin an immediate transaction to prevent other processes from making changes
-        await using var transaction = _connection.BeginTransaction(System.Data.IsolationLevel.Serializable);
-
-        try
+        else
         {
-            // Set foreign keys to deferred for this transaction
-            await using var deferCmd = new SqliteCommand("PRAGMA defer_foreign_keys = ON;", _connection, transaction);
-            await deferCmd.ExecuteNonQueryAsync();
+            if (cmd.CommandText == startingQuery)
+            {
+                return;
+            }
 
-            await using var updateQuoteCmd = new SqliteCommand(
-                "UPDATE Quote SET Name = @NewName WHERE Name = @Name",
-                _connection,
-                transaction);
-            updateQuoteCmd.Parameters.AddWithValue("@Name", name);
-            updateQuoteCmd.Parameters.AddWithValue("@NewName", newName);
-            await updateQuoteCmd.ExecuteNonQueryAsync();
-
-            await using var updateUpvotesCmd = new SqliteCommand(
-                "UPDATE UserUpvotes SET QuoteName = @NewName WHERE QuoteName = @Name",
-                _connection,
-                transaction);
-            updateUpvotesCmd.Parameters.AddWithValue("@Name", name);
-            updateUpvotesCmd.Parameters.AddWithValue("@NewName", newName);
-            await updateUpvotesCmd.ExecuteNonQueryAsync();
-
-            // Commit the transaction - constraints will be checked here
-            await transaction.CommitAsync();
-        }
-        catch (Exception ex)
-        {
-            // Roll back on failure
-            await transaction.RollbackAsync();
-            throw ex;
+            cmd.CommandText = cmd.CommandText.Remove(cmd.CommandText.Length - 1);
+            cmd.CommandText += " WHERE Name = @Name";
+            cmd.Parameters.AddWithValue("@Name", name);
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 
@@ -263,24 +250,6 @@ public class SqliteService
 
         var count = (long)await checkCmd.ExecuteScalarAsync();
         return count > 0;
-    }
-
-    public async Task SetQuoteCreationDateAsync(string name, DateTime newCreatedAt)
-    {
-        await using var cmd = new SqliteCommand("UPDATE Quote SET CreatedAt = @CreatedAt WHERE Name = @Name", _connection);
-        cmd.Parameters.AddWithValue("@Name", name);
-        cmd.Parameters.AddWithValue("@CreatedAt", newCreatedAt.ToString("o"));
-
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task SetCulpritAsync(string name, string culprit)
-    {
-        await using var cmd = new SqliteCommand("UPDATE Quote SET Culprit = @Culprit WHERE Name = @Name", _connection);
-        cmd.Parameters.AddWithValue("@Name", name);
-        cmd.Parameters.AddWithValue("@Culprit", culprit);
-
-        await cmd.ExecuteNonQueryAsync();
     }
 
     public async Task<List<string>> GetRawQuoteNamesAsync()

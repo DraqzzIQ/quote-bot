@@ -113,11 +113,12 @@ public class DiscordClientHost : IHostedService
 
     private async Task ButtonExecutedAsync(SocketMessageComponent component)
     {
-        string quoteName = component.Data.CustomId.Split(':')[1];
+        string quoteName = "";
         string userId = component.User.Id.ToString();
 
-        if (component.Data.CustomId.StartsWith("ADD"))
+        if (component.Data.CustomId.StartsWith(Messages.ADD_UPVOTE_BUTTON_PREFIX))
         {
+            quoteName = component.Data.CustomId.Substring(Messages.ADD_UPVOTE_BUTTON_PREFIX.Length);
             if (await _dbService.HasUserUpvotedAsync(userId, quoteName))
             {
                 await component.RespondAsync("Already upvoted this quote.", ephemeral: true);
@@ -127,8 +128,9 @@ public class DiscordClientHost : IHostedService
 
             await component.RespondAsync("Upvoted quote.", ephemeral: true);
         }
-        else if (component.Data.CustomId.StartsWith("REMOVE"))
+        else if (component.Data.CustomId.StartsWith(Messages.REMOVE_UPVOTE_BUTTON_PREFIX))
         {
+            quoteName = component.Data.CustomId.Substring(Messages.REMOVE_UPVOTE_BUTTON_PREFIX.Length);
             if (!await _dbService.HasUserUpvotedAsync(userId, quoteName))
             {
                 await component.RespondAsync("You did not upvote this quote.", ephemeral: true);
@@ -137,15 +139,26 @@ public class DiscordClientHost : IHostedService
             await _dbService.RemoveUpvoteAsync(userId, quoteName);
             await component.RespondAsync("Upvote removed.", ephemeral: true);
         }
+        else if (component.Data.CustomId.StartsWith(Messages.EDIT_QUOTE_BUTTON_PREFIX))
+        {
+            quoteName = component.Data.CustomId.Substring(Messages.EDIT_QUOTE_BUTTON_PREFIX.Length);
+        }
         
         Quote? quoteOpt = await _dbService.GetQuoteAsync(quoteName);
         if (quoteOpt == null)
             return;
         Quote quote = (Quote)quoteOpt;
-        await component.Message.ModifyAsync(props =>
+        if (component.Data.CustomId.StartsWith(Messages.EDIT_QUOTE_BUTTON_PREFIX))
         {
-            props.Embed = Messages.CreateEmbed(quote.Name, quote.Content, quote.Culprit, quote.CreatedAt, quote.Upvotes);
-        }).ConfigureAwait(false);
+            await component.RespondWithModalAsync(Messages.CreateEditQuoteModal(quote));
+        }
+        else
+        {
+            await component.Message.ModifyAsync(props =>
+            {
+                props.Embed = Messages.CreateEmbed(quote.Name, quote.Content, quote.Culprit, quote.CreatedAt, quote.Upvotes);
+            }).ConfigureAwait(false);
+        }
     }
 
     private async Task ClientReady()
