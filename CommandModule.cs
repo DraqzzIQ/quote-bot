@@ -307,10 +307,10 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
         string date = "";
         foreach(SocketMessageComponentData component in modal.Data.Components) {
             switch (component.CustomId) {
-                case "name": nameOrNewName = component.Value.TrimEnd(); break;
-                case "quote": quote = component.Value.TrimEnd(); break;
-                case "culprit": culprit = component.Value.TrimEnd(); break;
-                case "date": date = component.Value.TrimEnd(); break;
+                case "name": nameOrNewName = component.Value.Trim(); break;
+                case "quote": quote = component.Value.Trim(); break;
+                case "culprit": culprit = component.Value.Trim(); break;
+                case "date": date = component.Value.Trim(); break;
             }
         }
 
