@@ -6,7 +6,7 @@ public class SqliteService
 
     public SqliteService()
     {
-        using var cmd = new SqliteCommand("CREATE TABLE IF NOT EXISTS Quote (Name TEXT PRIMARY KEY, Content TEXT, Culprit TEXT, File TEXT, Upvotes INTEGER, CreatedAt TEXT)", _connection);
+        using var cmd = new SqliteCommand("CREATE TABLE IF NOT EXISTS Quote (Name TEXT PRIMARY KEY, Content TEXT, Culprit TEXT, File TEXT, Upvotes INTEGER, CreatedAt TEXT, RecordedAt TEXT)", _connection);
         cmd.ExecuteNonQuery();
 
         using var cmd2 = new SqliteCommand("CREATE TABLE IF NOT EXISTS UserUpvotes (UserId TEXT, QuoteName TEXT, PRIMARY KEY (UserId, QuoteName), FOREIGN KEY (QuoteName) REFERENCES Quote(Name))", _connection);
