@@ -143,7 +143,7 @@ public class DiscordClientHost : IHostedService
         {
             quoteName = component.Data.CustomId.Substring(Messages.EDIT_QUOTE_BUTTON_PREFIX.Length);
         }
-        
+
         Quote? quoteOpt = await _dbService.GetQuoteAsync(quoteName);
         if (quoteOpt == null)
             return;
@@ -157,6 +157,7 @@ public class DiscordClientHost : IHostedService
             await component.Message.ModifyAsync(props =>
             {
                 props.Embed = Messages.CreateEmbed(quote.Name, quote.Content, quote.Culprit, quote.CreatedAt, quote.Upvotes);
+                props.Components = Messages.CreateQuoteButtonComponent(quote.Content, quote.Upvotes);
             }).ConfigureAwait(false);
         }
     }
@@ -183,7 +184,7 @@ public class DiscordClientHost : IHostedService
         await _interactionService
             .RegisterCommandsToGuildAsync(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID") ?? throw new ArgumentNullException("GUILD_ID", "Guild id is not set.")))
             .ConfigureAwait(false);
-        
+
         await _leaderboardService.CreateLeaderboard();
     }
 

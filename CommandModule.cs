@@ -38,7 +38,8 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
         await RespondWithModalAsync(Messages.CreateAddQuoteModal());
     }
 
-    public async Task<Quote> AddQuoteAsync(string name, string quote, string culprit, DateTime dateTime) {
+    public async Task<Quote> AddQuoteAsync(string name, string quote, string culprit, DateTime dateTime)
+    {
 
         Quote quoteEntity;
         quoteEntity = new Quote
@@ -48,7 +49,8 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
             Content = quote,
             FilePath = "",
             Upvotes = 0,
-            CreatedAt = dateTime
+            CreatedAt = dateTime,
+            RecordedAt = DateTime.Now
         };
         await dbService.AddQuoteAsync(quoteEntity);
         return quoteEntity;
@@ -158,7 +160,8 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
         await RespondWithModalAsync(Messages.CreateEditQuoteModal((Quote)quote));
     }
 
-    public async Task<Quote> EditQuoteAsync(string name, string? newName, string? newQuote, string? newCulprit, DateTime? newCreatedAt) {
+    public async Task<Quote> EditQuoteAsync(string name, string? newName, string? newQuote, string? newCulprit, DateTime? newCreatedAt)
+    {
         await dbService.EditQuoteAsync(name, newName, newQuote, newCulprit, newCreatedAt);
         Quote? quote = await dbService.GetQuoteAsync(newName != null ? newName : name);
         return (Quote)quote;
@@ -224,7 +227,7 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
     private async Task ReplyWithEmbedAsync(Quote quote, string message = "", SocketModal? modal = null)
     {
         Embed embed = Messages.CreateEmbed(quote.Name, quote.Content, quote.Culprit, quote.CreatedAt, quote.Upvotes);
-        MessageComponent upvoteComponent = Messages.CreateQuoteButtonComponent(quote.Name);
+        MessageComponent upvoteComponent = Messages.CreateQuoteButtonComponent(quote.Name, quote.Upvotes);
         if (!String.IsNullOrEmpty(quote.FilePath))
         {
             await using var fs = new FileStream(quote.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -261,7 +264,7 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
 
     private async Task ReplyWithinCharacterLimit(string message)
     {
-        if(message.Length <= MaxChars)
+        if (message.Length <= MaxChars)
         {
             await FollowupAsync(message).ConfigureAwait(false);
             return;
@@ -300,13 +303,16 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
         }
     }
 
-    public async Task HandleModalSubmittedAsync(SocketModal modal) {
+    public async Task HandleModalSubmittedAsync(SocketModal modal)
+    {
         string nameOrNewName = "";
         string quote = "";
         string culprit = "";
         string date = "";
-        foreach(SocketMessageComponentData component in modal.Data.Components) {
-            switch (component.CustomId) {
+        foreach (SocketMessageComponentData component in modal.Data.Components)
+        {
+            switch (component.CustomId)
+            {
                 case "name": nameOrNewName = component.Value.Trim(); break;
                 case "quote": quote = component.Value.Trim(); break;
                 case "culprit": culprit = component.Value.Trim(); break;
@@ -348,7 +354,7 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
             }
             Quote finalQuoteEntity;
             finalQuoteEntity = await AddQuoteAsync(nameOrNewName, quote, culprit, string.IsNullOrWhiteSpace(date) ? DateTime.Now : dateTime);
-            await ReplyWithEmbedAsync(finalQuoteEntity, "Quote added.", modal:modal);
+            await ReplyWithEmbedAsync(finalQuoteEntity, "Quote added.", modal: modal);
         }
         else if (modal.Data.CustomId.StartsWith(Messages.EDIT_QUOTE_MODAL_PREFIX))
         {
@@ -369,7 +375,7 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
                      quote,
                      culprit,
                      dateTime);
-            await ReplyWithEmbedAsync(finalQuoteEntity, "Quote edited.", modal:modal);
+            await ReplyWithEmbedAsync(finalQuoteEntity, "Quote edited.", modal: modal);
         }
     }
 }

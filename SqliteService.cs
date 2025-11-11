@@ -15,13 +15,14 @@ public class SqliteService
 
     public async Task AddQuoteAsync(Quote quote)
     {
-        await using var cmd = new SqliteCommand("INSERT INTO Quote (Name, Content, Culprit, File, Upvotes, CreatedAt) VALUES (@Name, @Content, @Culprit, @File, @Upvotes, @CreatedAt)", _connection);
+        await using var cmd = new SqliteCommand("INSERT INTO Quote (Name, Content, Culprit, File, Upvotes, CreatedAt, RecordedAt) VALUES (@Name, @Content, @Culprit, @File, @Upvotes, @CreatedAt, @RecordedAt)", _connection);
         cmd.Parameters.AddWithValue("@Name", quote.Name);
         cmd.Parameters.AddWithValue("@Content", quote.Content);
         cmd.Parameters.AddWithValue("@Culprit", quote.Culprit);
         cmd.Parameters.AddWithValue("@File", quote.FilePath);
         cmd.Parameters.AddWithValue("@Upvotes", quote.Upvotes);
         cmd.Parameters.AddWithValue("@CreatedAt", quote.CreatedAt.ToString("o"));
+        cmd.Parameters.AddWithValue("@RecordedAt", quote.RecordedAt.ToString("o"));
 
         await cmd.ExecuteNonQueryAsync();
     }
@@ -125,7 +126,7 @@ public class SqliteService
 
     public async Task<Quote?> GetQuoteAsync(string name)
     {
-        await using var cmd = new SqliteCommand("SELECT Name, Content, Culprit, File, Upvotes, CreatedAt FROM Quote WHERE Name = @Name", _connection);
+        await using var cmd = new SqliteCommand("SELECT Name, Content, Culprit, File, Upvotes, CreatedAt, RecordedAt FROM Quote WHERE Name = @Name", _connection);
         cmd.Parameters.AddWithValue("@Name", name);
 
         await using var reader = await cmd.ExecuteReaderAsync();
@@ -138,15 +139,17 @@ public class SqliteService
                 Culprit = reader.GetString(2),
                 FilePath = reader.GetString(3),
                 Upvotes = reader.GetInt32(4),
-                CreatedAt = DateTime.Parse(reader.GetString(5))
+                CreatedAt = DateTime.Parse(reader.GetString(5)),
+                RecordedAt = DateTime.Parse(reader.GetString(6))
             };
         }
         return null;
     }
 
-    public async Task<Quote?> GetRandomQuoteAsync()
+    public async Task<Quote?> GetRandomQuoteAsync(int minUpvotes = 0)
     {
-        await using var cmd = new SqliteCommand("SELECT Name, Content, Culprit, File, Upvotes, CreatedAt FROM Quote ORDER BY RANDOM() LIMIT 1", _connection);
+        await using var cmd = new SqliteCommand("SELECT Name, Content, Culprit, File, Upvotes, CreatedAt, RecordedAt FROM Quote WHERE Upvotes >= @MinUpvotes ORDER BY RANDOM() LIMIT 1", _connection);
+        cmd.Parameters.AddWithValue("@MinUpvotes", minUpvotes);
         await using var reader = await cmd.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
@@ -157,7 +160,8 @@ public class SqliteService
                 Culprit = reader.GetString(2),
                 FilePath = reader.GetString(3),
                 Upvotes = reader.GetInt32(4),
-                CreatedAt = DateTime.Parse(reader.GetString(5))
+                CreatedAt = DateTime.Parse(reader.GetString(5)),
+                RecordedAt = DateTime.Parse(reader.GetString(6))
             };
         }
         return null;
@@ -184,7 +188,7 @@ public class SqliteService
         await using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
-            string entry = $"{reader.GetString(0)}: {reader.GetString(1)} - {reader.GetString(2)}, {DateTime.Parse(reader.GetString(3)).ToString("dd.MM.yy")}";
+            string entry = $"{reader.GetString(0)}⬆️: {reader.GetString(1)} - {reader.GetString(2)}, {DateTime.Parse(reader.GetString(3)).ToString("dd.MM.yy")}";
             quoteNames.Add(entry);
         }
 
@@ -195,7 +199,7 @@ public class SqliteService
     {
         List<Quote> quotes = [];
 
-        string query = "SELECT Name, Content, Culprit, File, Upvotes, CreatedAt FROM Quote ORDER BY Upvotes DESC LIMIT @Count";
+        string query = "SELECT Name, Content, Culprit, File, Upvotes, CreatedAt, RecordedAt FROM Quote ORDER BY Upvotes DESC LIMIT @Count";
         await using var cmd = new SqliteCommand(query, _connection);
         cmd.Parameters.AddWithValue("@Count", count);
         await using var reader = await cmd.ExecuteReaderAsync();
@@ -208,7 +212,8 @@ public class SqliteService
                 Culprit = reader.GetString(2),
                 FilePath = reader.GetString(3),
                 Upvotes = reader.GetInt32(4),
-                CreatedAt = DateTime.Parse(reader.GetString(5))
+                CreatedAt = DateTime.Parse(reader.GetString(5)),
+                RecordedAt = DateTime.Parse(reader.GetString(6))
             });
         }
 
@@ -280,6 +285,13 @@ public class SqliteService
         }
 
         return culprits;
+    }
+
+    public async Task DeleteQuotesWithZeroUpvotesAsync()
+    {
+        await using var deleteCmd = new SqliteCommand("DELETE FROM Quote WHERE Upvotes = 0 AND RecordedAt < @TwoWeeksAgo", _connection);
+        deleteCmd.Parameters.AddWithValue("@TwoWeeksAgo", DateTime.UtcNow.AddDays(-14));
+        await deleteCmd.ExecuteNonQueryAsync();
     }
 
     private static SqliteConnection CreateSqliteConnection()

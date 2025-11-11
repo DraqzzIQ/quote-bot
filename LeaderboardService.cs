@@ -33,7 +33,7 @@ public class LeaderboardService(SqliteService dbService, DiscordSocketClient cli
         if (newLeaderboard.Count == _currentLeaderboard.Count &&
             !newLeaderboard.Where((t, i) => !t.Equals(_currentLeaderboard[i])).Any())
             return;
-        
+
         await _leaderboardMessage.ModifyAsync(props =>
         {
             props.Content = GetFormattedLeaderboard(newLeaderboard);
@@ -41,16 +41,16 @@ public class LeaderboardService(SqliteService dbService, DiscordSocketClient cli
         }).ConfigureAwait(false);
         _currentLeaderboard = newLeaderboard;
     }
-    
+
     private string GetFormattedLeaderboard(List<Quote> leaderboard)
     {
-        return leaderboard.Aggregate("## Top Quotes\n", (current, quote) => current + $"**{quote.Upvotes}: {quote.Name} - {quote.Culprit}, {quote.CreatedAt:dd.MM.yy}**\n„{quote.Content}”\n");
+        return leaderboard.Aggregate("## Top Quotes\n", (current, quote) => current + $"**{quote.Upvotes}⬆️: {quote.Name} - {quote.Culprit}, {quote.CreatedAt:dd.MM.yy}**\n„{quote.Content}”\n");
     }
 
     private List<FileAttachment> GetFileAttachments(List<Quote> leaderboard)
     {
         List<FileAttachment> fileAttachments = [];
-        foreach(Quote quote in leaderboard)
+        foreach (Quote quote in leaderboard)
         {
             if (quote.FilePath == "")
                 continue;

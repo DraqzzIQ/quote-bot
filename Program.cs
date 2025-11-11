@@ -29,12 +29,18 @@ builder.Services.AddLogging(x => x.AddConsole().SetMinimumLevel(LogLevel.Informa
 // Quote of the week
 builder.Services.AddQuartz(q =>
 {
-    var jobKey = new JobKey("weeklyJob");
-    q.AddJob<QuoteOfTheWeek>(opts => opts.WithIdentity(jobKey));
+    var qotwJobKey = new JobKey("weeklyJob");
+    var cleanUnpopularQuotesJobKey = new JobKey("cleanUnpopularQuotesJob");
+    q.AddJob<QuoteOfTheWeek>(opts => opts.WithIdentity(qotwJobKey));
+    q.AddJob<CleanUnpopularQuotes>(opts => opts.WithIdentity(cleanUnpopularQuotesJobKey));
     q.AddTrigger(opts => opts
-        .ForJob(jobKey)
+        .ForJob(qotwJobKey)
         .WithIdentity("weeklyJobTrigger")
         .WithSchedule(CronScheduleBuilder.WeeklyOnDayAndHourAndMinute(DayOfWeek.Monday, 9, 0)));
+    q.AddTrigger(opts => opts
+        .ForJob(cleanUnpopularQuotesJobKey)
+        .WithIdentity("cleanUnpopularQuotesTrigger")
+        .WithSchedule(CronScheduleBuilder.DailyAtHourAndMinute(0, 0)));
 });
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
