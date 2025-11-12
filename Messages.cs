@@ -9,10 +9,10 @@ public class Messages
     public static readonly string REMOVE_UPVOTE_BUTTON_PREFIX = "REMOVE:";
     public static readonly string EDIT_QUOTE_BUTTON_PREFIX = "EDIT:";
 
-    public static Embed CreateEmbed(string name, string quote, string author, DateTime date, int upvotes)
+    public static Embed CreateEmbed(string name, string quote, string author, DateTime date)
     {
         var builder = new EmbedBuilder();
-        return builder.AddField($"{upvotes}: {name}", $"„{quote}”")
+        return builder.AddField($"{name}", $"„{quote}”")
         .WithFooter($"{author} - {date.ToString("dd.MM.yyyy")}").Build();
     }
 

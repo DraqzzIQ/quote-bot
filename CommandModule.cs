@@ -226,7 +226,7 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
 
     private async Task ReplyWithEmbedAsync(Quote quote, string message = "", SocketModal? modal = null)
     {
-        Embed embed = Messages.CreateEmbed(quote.Name, quote.Content, quote.Culprit, quote.CreatedAt, quote.Upvotes);
+        Embed embed = Messages.CreateEmbed(quote.Name, quote.Content, quote.Culprit, quote.CreatedAt);
         MessageComponent upvoteComponent = Messages.CreateQuoteButtonComponent(quote.Name, quote.Upvotes);
         if (!String.IsNullOrEmpty(quote.FilePath))
         {

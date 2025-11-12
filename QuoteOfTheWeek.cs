@@ -14,7 +14,7 @@ public class QuoteOfTheWeek(DiscordSocketClient client, SqliteService dbService)
             return;
 
         var embed = Messages.CreateEmbed(quote.Value.Name, quote.Value.Content, quote.Value.Culprit,
-            quote.Value.CreatedAt, quote.Value.Upvotes);
+            quote.Value.CreatedAt);
         MessageComponent upvoteComponent = Messages.CreateQuoteButtonComponent(quote.Value.Name, quote.Value.Upvotes);
 
         if (quote.Value.FilePath == "")

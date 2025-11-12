@@ -156,8 +156,8 @@ public class DiscordClientHost : IHostedService
         {
             await component.Message.ModifyAsync(props =>
             {
-                props.Embed = Messages.CreateEmbed(quote.Name, quote.Content, quote.Culprit, quote.CreatedAt, quote.Upvotes);
-                props.Components = Messages.CreateQuoteButtonComponent(quote.Content, quote.Upvotes);
+                props.Embed = Messages.CreateEmbed(quote.Name, quote.Content, quote.Culprit, quote.CreatedAt);
+                props.Components = Messages.CreateQuoteButtonComponent(quote.Name, quote.Upvotes);
             }).ConfigureAwait(false);
         }
     }
