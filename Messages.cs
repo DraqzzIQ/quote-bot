@@ -28,7 +28,7 @@ public class Messages
             .WithCustomId(EDIT_QUOTE_MODAL_PREFIX + oldQuote.Name)
             .AddTextInput("Name", "name", placeholder: oldQuote.Name, value: oldQuote.Name)
             .AddTextInput("Culprit", "culprit", placeholder: oldQuote.Culprit, value: oldQuote.Culprit)
-            .AddTextInput("Quote", "quote", placeholder: oldQuote.Content, value: oldQuote.Content)
+            .AddTextInput("Quote", "quote", placeholder: oldQuote.Content, value: oldQuote.Content, style: TextInputStyle.Paragraph)
             .AddTextInput("Date", "date", placeholder: oldQuote.CreatedAt.Date.ToString("dd.MM.yyyy"), value: oldQuote.CreatedAt.Date.ToString("dd.MM.yyyy"))
             .AddFileUpload("Audio", "audio", isRequired: false)
             .Build();
@@ -41,7 +41,7 @@ public class Messages
             .WithCustomId(ADD_QUOTE_MODAL_CUSTOMID)
             .AddTextInput("Name", "name", placeholder: "what did he sayyy")
             .AddTextInput("Culprit", "culprit", placeholder: "Donald J. Trump")
-            .AddTextInput("Quote", "quote", placeholder: "Smart people don't like me")
+            .AddTextInput("Quote", "quote", placeholder: "Smart people don't like me", style: TextInputStyle.Paragraph)
             .AddTextInput("Date", "date", placeholder: "13.09.2025", required: false)
             .AddFileUpload("Audio", "audio", isRequired: false)
             .Build();
