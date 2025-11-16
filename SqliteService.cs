@@ -27,7 +27,7 @@ public class SqliteService
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public async Task EditQuoteAsync(string name, string? newName, string? newQuote, string? newCulprit, DateTime? newCreatedAt)
+    public async Task EditQuoteAsync(string name, string? newName, string? newQuote, string? newCulprit, DateTime? newCreatedAt, string? newFilePath)
     {
         string startingQuery = "UPDATE Quote SET";
         await using var cmd = new SqliteCommand(startingQuery, _connection);
@@ -43,6 +43,12 @@ public class SqliteService
         {
             cmd.CommandText += " Culprit = @Culprit,";
             cmd.Parameters.AddWithValue("@Culprit", newCulprit);
+        }
+
+        if (!String.IsNullOrEmpty(newFilePath))
+        {
+            cmd.CommandText += " File = @File,";
+            cmd.Parameters.AddWithValue("@File", newFilePath);
         }
 
         if (newCreatedAt != null)
@@ -105,15 +111,6 @@ public class SqliteService
         await using var deleteQuoteCmd = new SqliteCommand("DELETE FROM Quote WHERE Name = @Name", _connection);
         deleteQuoteCmd.Parameters.AddWithValue("@Name", name);
         await deleteQuoteCmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task AttachMediaAsync(string name, string fileName)
-    {
-        await using var cmd = new SqliteCommand("UPDATE Quote SET File = @File WHERE Name = @Name", _connection);
-        cmd.Parameters.AddWithValue("@Name", name);
-        cmd.Parameters.AddWithValue("@File", fileName);
-
-        await cmd.ExecuteNonQueryAsync();
     }
 
     public async Task RemoveMediaAsync(string name)

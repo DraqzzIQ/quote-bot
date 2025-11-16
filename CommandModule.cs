@@ -38,8 +38,14 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
         await RespondWithModalAsync(Messages.CreateAddQuoteModal());
     }
 
-    public async Task<Quote> AddQuoteAsync(string name, string quote, string culprit, DateTime dateTime)
+    public async Task<Quote> AddQuoteAsync(string name, string quote, string culprit, DateTime dateTime, IAttachment? attachment = null)
     {
+        string filePath = "";
+
+        if (attachment != null)
+        {
+            filePath = await DownloadFile(attachment);
+        }
 
         Quote quoteEntity;
         quoteEntity = new Quote
@@ -47,7 +53,7 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
             Name = name,
             Culprit = culprit,
             Content = quote,
-            FilePath = "",
+            FilePath = filePath,
             Upvotes = 0,
             CreatedAt = dateTime,
             RecordedAt = DateTime.Now
@@ -160,48 +166,23 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
         await RespondWithModalAsync(Messages.CreateEditQuoteModal((Quote)quote));
     }
 
-    public async Task<Quote> EditQuoteAsync(string name, string? newName, string? newQuote, string? newCulprit, DateTime? newCreatedAt)
+    public async Task<Quote> EditQuoteAsync(string name, string? newName, string? newQuote, string? newCulprit, DateTime? newCreatedAt, IAttachment? newAttachment)
     {
-        await dbService.EditQuoteAsync(name, newName, newQuote, newCulprit, newCreatedAt);
+        string? filePath = null;
+        if (newAttachment != null)
+        {
+            filePath = await DownloadFile(newAttachment);
+            Quote? oldQuote = await dbService.GetQuoteAsync(name);
+            if (!String.IsNullOrWhiteSpace(oldQuote.Value.FilePath))
+            {
+                File.Delete(oldQuote.Value.FilePath);
+            }
+        }
+        await dbService.EditQuoteAsync(name, newName, newQuote, newCulprit, newCreatedAt, filePath);
         Quote? quote = await dbService.GetQuoteAsync(newName != null ? newName : name);
         return (Quote)quote;
     }
 
-
-    [SlashCommand("add-audio", description: "add audio to a quote", runMode: RunMode.Async)]
-    public async Task AddAudioAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name, [Summary("audio", "audio proof")] IAttachment attachment)
-    {
-        if (!IsChannelAllowed(Context.Channel))
-        {
-            await RespondAsync("This text channel is not allowed.").ConfigureAwait(false);
-            return;
-        }
-        await DeferAsync().ConfigureAwait(false);
-        if (!await QuoteExists(name))
-        {
-            await FollowupAsync("The Quote does not exist.").ConfigureAwait(false);
-            return;
-        }
-
-        if (!attachment.ContentType.StartsWith("audio"))
-        {
-            Console.WriteLine(attachment.ContentType);
-            await FollowupAsync("Attachment can only be audio.").ConfigureAwait(false);
-            return;
-        }
-
-        var info = new FileInfo(attachment.Filename);
-        string filePath = "/bot-data/quotes/" + Guid.NewGuid().ToString() + info.Extension;
-        await using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
-        var response = await _client.GetAsync(attachment!.Url).ConfigureAwait(false);
-        await response.Content.CopyToAsync(fs).ConfigureAwait(false);
-        await fs.DisposeAsync();
-
-        await dbService.AttachMediaAsync(name, filePath).ConfigureAwait(false);
-
-        Quote quote = (Quote)await dbService.GetQuoteAsync(name);
-        await ReplyWithEmbedAsync(quote, "Audio attached.");
-    }
 
     [SlashCommand("remove-audio", description: "remove audio from a quote", runMode: RunMode.Async)]
     public async Task RemoveAudioAsync([Summary("name", "the name of the quote"), Autocomplete(typeof(QuoteNameAutoCompleter))] string name)
@@ -262,6 +243,17 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
         return channel.Id == _channelId;
     }
 
+    private async Task<string> DownloadFile(IAttachment attachment)
+    {
+        var info = new FileInfo(attachment.Filename);
+        string filePath = "/bot-data/quotes/" + Guid.NewGuid().ToString() + info.Extension;
+        await using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        var response = await _client.GetAsync(attachment!.Url).ConfigureAwait(false);
+        await response.Content.CopyToAsync(fs).ConfigureAwait(false);
+        await fs.DisposeAsync();
+        return filePath;
+    }
+
     private async Task ReplyWithinCharacterLimit(string message)
     {
         if (message.Length <= MaxChars)
@@ -320,6 +312,18 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
+        IAttachment? audio = null;
+        if (modal.Data.Attachments != null && modal.Data.Attachments.Count() != 0)
+        {
+            audio = modal.Data.Attachments.First();
+
+            if (!audio.ContentType.StartsWith("audio"))
+            {
+                await modal.RespondAsync("Attachment can only be audio.");
+                return;
+            }
+        }
+
         DateTime dateTime = new DateTime();
         if (!string.IsNullOrWhiteSpace(date) && !DateTime.TryParseExact(date, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out dateTime))
         {
@@ -353,7 +357,7 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
                 return;
             }
             Quote finalQuoteEntity;
-            finalQuoteEntity = await AddQuoteAsync(nameOrNewName, quote, culprit, string.IsNullOrWhiteSpace(date) ? DateTime.Now : dateTime);
+            finalQuoteEntity = await AddQuoteAsync(nameOrNewName, quote, culprit, string.IsNullOrWhiteSpace(date) ? DateTime.Now : dateTime, audio);
             await ReplyWithEmbedAsync(finalQuoteEntity, "Quote added.", modal: modal);
         }
         else if (modal.Data.CustomId.StartsWith(Messages.EDIT_QUOTE_MODAL_PREFIX))
@@ -374,7 +378,8 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
                     string.IsNullOrWhiteSpace(nameOrNewName) || nameOrNewName == oldName ? null : nameOrNewName,
                      quote,
                      culprit,
-                     dateTime);
+                     dateTime,
+                     audio);
             await ReplyWithEmbedAsync(finalQuoteEntity, "Quote edited.", modal: modal);
         }
     }
