@@ -1,5 +1,6 @@
 ﻿services:
   quote-bot:
+    restart: 'unless-stopped'
     image: quote-bot
     env_file:
       - ".env"
