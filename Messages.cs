@@ -42,7 +42,7 @@ public class Messages
             .AddTextInput("Name", "name", placeholder: "what did he sayyy")
             .AddTextInput("Culprit", "culprit", placeholder: "Donald J. Trump")
             .AddTextInput("Quote", "quote", placeholder: "Smart people don't like me", style: TextInputStyle.Paragraph)
-            .AddTextInput("Date", "date", placeholder: "13.09.2025", required: false)
+            .AddTextInput("Date", "date", placeholder: DateTime.Now.ToString("dd.MM.yyyy"), required: false)
             .AddFileUpload("Audio", "audio", isRequired: false)
             .Build();
     }
