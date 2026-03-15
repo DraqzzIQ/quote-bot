@@ -19,7 +19,7 @@ public class QuoteOfTheWeek(DiscordSocketClient client, SqliteService dbService)
 
         if (quote.Value.FilePath == "")
         {
-            await channel.SendMessageAsync(embed: embed, text: "## Quote of the week", components: upvoteComponent).ConfigureAwait(false);
+            await channel.SendMessageAsync(embed: embed, text: "## Motivational quote of the week", components: upvoteComponent).ConfigureAwait(false);
             return;
         }
 
